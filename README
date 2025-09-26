@@ -1,0 +1,9 @@
+//NAME: Tianjian Li
+//NETID: tl107
+
+How to execute my file: 
+I did my project in Java and have many .java files in the root directory to compile. To compile them, just run './compile.csh'. Or you can manually run the following:
+
+'javac Main.java Scanner.java TransitionTable.java TokenType.java Token.java InterRep.java InterRepBlock.java Parser.java ParserResult.java'
+
+This will create the 'Main.class' file needed to run my code. My '412fe' script runs this.
