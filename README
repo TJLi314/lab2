@@ -1,6 +1,10 @@
 //NAME: Tianjian Li
 //NETID: tl107
 
+Questions:
+Do we ignore output operations?
+For an unused definition, do we increment maxLive?
+
 How to execute my file: 
 I did my project in Java and have many .java files in the root directory to compile. To compile them, just run './compile.csh'. Or you can manually run the following:
 

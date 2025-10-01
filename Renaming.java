@@ -10,15 +10,18 @@ public class Renaming {
         int maxSR = -1;
         while (current.getNext() != null) {
             index++;
-            maxSR = Math.max(maxSR, current.getArg1().getSR());
-            maxSR = Math.max(maxSR, current.getArg2().getSR());
-            maxSR = Math.max(maxSR, current.getArg3().getSR());
+
+            if (current.getOpCode() != TokenType.LOADI && current.getOpCode() != TokenType.OUTPUT && current.getArg1().getSR() != null) maxSR = Math.max(maxSR, current.getArg1().getSR());
+            if (current.getArg2().getSR() != null) maxSR = Math.max(maxSR, current.getArg2().getSR());
+            if (current.getArg3().getSR() != null) maxSR = Math.max(maxSR, current.getArg3().getSR());
             current = current.getNext();
         }
+        // System.out.println("Current index: " + index);
+        // System.out.println("Current maxSR: " + maxSR);
 
-        int[] SRToVR = new int[maxSR];
+        int[] SRToVR = new int[maxSR + 1];
         Arrays.fill(SRToVR, -1);
-        int[] LU = new int[maxSR];
+        int[] LU = new int[maxSR + 1];
         Arrays.fill(LU, -1);
 
         int VRName = 0;
@@ -44,8 +47,8 @@ public class Renaming {
                     currentLive++;
                 }
 
-                operand.setVR(SRToVR[SR]);
-                operand.setNU(LU[SR]);
+                current.getArg3().setVR(SRToVR[SR]);
+                current.getArg3().setNU(LU[SR]);
                 SRToVR[SR] = -1;
                 LU[SR] = -1;
                 currentLive--;
@@ -66,7 +69,7 @@ public class Renaming {
                 }
                 case ADD, SUB, MULT, LSHIFT, RSHIFT -> {
                     useOperands.add(current.getArg1());
-                    useOperands.add(current.getArg3());
+                    useOperands.add(current.getArg2());
                 }
                 default -> {
                 }
