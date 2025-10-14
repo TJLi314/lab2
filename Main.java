@@ -120,10 +120,11 @@ public class Main {
     private static void runIRMode(String filename) {
         try {
             ParserResult result = Parser.parse(filename);
+            InterRep head = result.getHead();
             if (result != null) {
                 if (result.isSuccess()) {
                     // printIR(result);
-                    int maxLive = Renaming.RenamingAlg(result.getHead());
+                    int maxLive = Renaming.RenamingAlg(head);
                     printIR(result);
                     // System.out.println("MaxLive: " + maxLive);
                 } else {
@@ -132,6 +133,11 @@ public class Main {
             } else {
                 System.out.println("Parsing failed.");
             }
+
+            System.out.println("Allocating registers");
+            Allocator.AllocateRegisters(head, 4, 4);
+            printIR(result);
+
         } catch (Exception e) {
             System.err.println("Error parsing file: " + e.getMessage());
         }
