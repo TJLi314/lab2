@@ -57,26 +57,27 @@ public class InterRepBlock {
         this.NU = NU;
     }
 
-    // @Override
-    // public String toString() {
-    //     if (SR != null && VR == null) {
-    //         // For constants (e.g. loadI)
-    //         return String.valueOf(SR);
-    //     } else if (VR != null) {
-    //         // For registers
-    //         return "r" + VR;
-    //     }
-    //     return "";
-    // }
     @Override
     public String toString() {
-        return String.format(
-            "InterRepBlock { SR=%s, VR=%s, PR=%s, NU=%s }",
-            SR != null ? SR : "null",
-            VR != null ? "r" + VR : "null",
-            PR != null ? PR : "null",
-            NU != null ? NU : "null"
-        );
+        if (SR != null && VR == null) {
+            // For constants (e.g. loadI)
+            return String.valueOf(SR);
+        } else if (PR != null) {
+            // For registers
+            return "r" + PR;
+        }
+        return "";
     }
+
+    // @Override
+    // public String toString() {
+    //     return String.format(
+    //         "InterRepBlock { SR=%s, VR=%s, PR=%s, NU=%s }",
+    //         SR != null ? SR : "null",
+    //         VR != null ? "r" + VR : "null",
+    //         PR != null ? PR : "null",
+    //         NU != null ? NU : "null"
+    //     );
+    // }
 
 }   

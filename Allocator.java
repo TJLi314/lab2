@@ -13,40 +13,40 @@ public class Allocator {
             if (current.getArg3().getVR() != null) maxVR = Math.max(maxVR, current.getArg3().getVR());
             current = current.getNext();
         }
-        System.out.println("MaxVR: " + maxVR);
+        // System.out.println("MaxVR: " + maxVR);
 
         // data structures needed to support allocation
         int[] VRToPR = new int[maxVR + 1];
         int[] VRToSpillLoc = new int[maxVR + 1];
-        int[] PRToVR = new int[regNum];
-        int[] PRNU = new int[regNum];
+        // int[] PRToVR = new int[regNum];
+        // int[] PRNU = new int[regNum];
 
-        // int[] PRToVR;
-        // int[] PRNU;
-        // if (maxLive <= regNum) {
-        //     PRToVR = new int[regNum];
-        //     PRNU = new int[regNum];
-        // }
-        // else {
-        //     PRToVR = new int[regNum - 1];
-        //     PRNU = new int[regNum - 1];
-        // }
+        int[] PRToVR;
+        int[] PRNU;
+        if (maxLive <= regNum) {
+            PRToVR = new int[regNum];
+            PRNU = new int[regNum];
+        }
+        else {
+            PRToVR = new int[regNum - 1];
+            PRNU = new int[regNum - 1];
+        }
         Arrays.fill(VRToPR, -1);
         Arrays.fill(VRToSpillLoc, -1);
         Arrays.fill(PRToVR, -1);
         Arrays.fill(PRNU, -1);
 
         ArrayList<Integer> freeRegs = new ArrayList<>();
-        // int i = maxLive <= regNum ? regNum - 1 : regNum - 2;
-        for (int i = regNum - 1; i >= 0; i--) freeRegs.add(i);
-        printFreeRegisters(freeRegs);
+        int i = maxLive <= regNum ? regNum - 1 : regNum - 2;
+        for (; i >= 0; i--) freeRegs.add(i);
+        // printFreeRegisters(freeRegs);
 
-        printMaps(VRToPR, PRToVR, PRNU, VRToSpillLoc);
+        // printMaps(VRToPR, PRToVR, PRNU, VRToSpillLoc);
         int spillLoc = 32768;
-        int spillReg = regNum;
+        int spillReg = regNum - 1;
         current = head;
         while (current != null) {
-            System.out.println("\nCurrent operation: " + current);
+            // System.out.println("\nCurrent operation: " + current);
             // Ignore output and nop operations
             // QUESTION: Do we ignore output operations?
             if (current.getOpCode() == TokenType.OUTPUT || current.getOpCode() == TokenType.NOP) {
@@ -75,7 +75,7 @@ public class Allocator {
                 }
             }
 
-            System.out.println("Assigning VRs to PRs for uses");
+            // System.out.println("Assigning VRs to PRs for uses");
             // Assign VRs to PRs
             for (InterRepBlock operand : useOperands) {
                 Integer VR = operand.getVR();
@@ -109,7 +109,7 @@ public class Allocator {
                         }
                     }
                     int VRToSpill = PRToVR[furthestNUPR];
-                    System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
+                    // System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
 
                     // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
                     VRToPR[VRToSpill] = -1;
@@ -135,12 +135,12 @@ public class Allocator {
                     loadiNode.setNext(storeNode);
                     current.setPrev(storeNode);
 
-                    System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
+                    // System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
                 }
                 
                 // Restore code
                 if (VRToSpillLoc[VR] != -1) {
-                    System.out.println("Restoring VR " + VR + " with address " + VRToSpillLoc[VR]);
+                    // System.out.println("Restoring VR " + VR + " with address " + VRToSpillLoc[VR]);
                     // Create loadI operation
                     InterRep loadiNode = new InterRep(
                         TokenType.LOADI,
@@ -173,35 +173,35 @@ public class Allocator {
                 }
 
                 int PR = freeRegs.remove(freeRegs.size() - 1);
-                printFreeRegisters(freeRegs);
+                // printFreeRegisters(freeRegs);
                 Integer NU = operand.getNU();
                 VRToPR[VR] = PR;
                 PRToVR[PR] = VR;
                 PRNU[PR] = NU;
                 operand.setPR(PR);
-                System.out.println("Adding VR " + VR + " and PR" + PR);
+                // System.out.println("Adding VR " + VR + " and PR" + PR);
                 // System.out.println(operand);
             }
             
-            System.out.println("Freeing PRs that have last used VRs");
+            // System.out.println("Freeing PRs that have last used VRs");
             // Free PRs that have last use VRs
             for (InterRepBlock operand : useOperands) {
-                System.out.println(operand);
-                System.out.println(operand.getPR());
+                // System.out.println(operand);
+                // System.out.println(operand.getPR());
                 int PR = VRToPR[operand.getVR()];
                 if (PRNU[PR] != -1) continue;
                 
-                System.out.println("Freeing " + operand);
+                // System.out.println("Freeing " + operand);
                 Integer VR = operand.getVR();
                 VRToPR[VR] = -1;
                 PRToVR[PR] = -1;
                 PRNU[PR] = -1;
                 freeRegs.add(PR);
-                System.out.println("Freeing VR " + VR + " and PR" + PR);
-                printFreeRegisters(freeRegs);
+                // System.out.println("Freeing VR " + VR + " and PR" + PR);
+                // printFreeRegisters(freeRegs);
             }
 
-            System.out.println("Assigning PRs to VRs for definitions");
+            // System.out.println("Assigning PRs to VRs for definitions");
             // Process operand definition
             if (current.getOpCode() != TokenType.STORE) {
                 // Not sure if this code is needed
@@ -237,7 +237,7 @@ public class Allocator {
                         }
                     }
                     int VRToSpill = PRToVR[furthestNUPR];
-                    System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
+                    // System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
 
                     // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
                     VRToPR[VRToSpill] = -1;
@@ -263,21 +263,21 @@ public class Allocator {
                     loadiNode.setNext(storeNode);
                     current.setPrev(storeNode);
 
-                    System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
+                    // System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
                 }
 
                 int PR = freeRegs.remove(freeRegs.size() - 1);
-                printFreeRegisters(freeRegs);
+                // printFreeRegisters(freeRegs);
                 Integer NU = operand.getNU();
                 VRToPR[VR] = PR;
                 PRToVR[PR] = VR;
                 PRNU[PR] = NU;
                 operand.setPR(PR);
-                System.out.println("Adding VR " + VR + " and PR" + PR);
+                // System.out.println("Adding VR " + VR + " and PR" + PR);
             }
 
             current = current.getNext();
-            printMaps(VRToPR, PRToVR, PRNU, VRToSpillLoc);
+            // printMaps(VRToPR, PRToVR, PRNU, VRToSpillLoc);
         }
     }
 

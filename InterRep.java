@@ -70,7 +70,7 @@ public class InterRep {
             case MULT:
             case LSHIFT:
             case RSHIFT:
-                return opCode.getLexeme() + " " + arg1 + "," + arg2 + " => " + arg3;
+                return opCode.getLexeme() + " " + arg1 + ", " + arg2 + " => " + arg3;
             default:
                 return opCode.getLexeme() + " " + arg1 + " " + arg2 + " " + arg3;
         }

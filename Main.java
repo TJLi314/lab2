@@ -2,6 +2,13 @@ import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
+        if (args.length == 2 && args[0].matches("\\d+")) {
+            int k = Integer.parseInt(args[0]);
+            String filename = args[1];
+            runAllocMode(k, filename);
+            return;
+        }
+
         boolean hasH = false;
         boolean hasR = false;
         boolean hasP = false;
@@ -135,13 +142,38 @@ public class Main {
             }
 
             System.out.println("Allocating registers");
-            Allocator.AllocateRegisters(head, 4, 4);
+            Allocator.AllocateRegisters(head, 4, 3);
             printIR(result);
 
         } catch (Exception e) {
             System.err.println("Error parsing file: " + e.getMessage());
         }
     }
+
+    private static void runAllocMode(int k, String filename) {
+        if (k < 3 || k > 64) {
+            System.err.printf("ERROR: Invalid number of registers (%d). Must be between 3 and 64.\n", k);
+            return;
+        }
+        if (!checkFile(filename)) return;
+
+        try {
+            ParserResult result = Parser.parse(filename);
+            if (result == null || !result.isSuccess()) {
+                System.err.println("ERROR: Parsing failed. Cannot allocate registers.");
+                return;
+            }
+
+            InterRep head = result.getHead();
+            int maxLive = Renaming.RenamingAlg(head);
+            Allocator.AllocateRegisters(head, maxLive, k); // example: 3 spill registers
+            printIR(result);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: Failed during allocation: " + e.getMessage());
+        }
+    }
+
 
     private static void printIR(ParserResult result) {
         InterRep current = result.getHead();
