@@ -84,64 +84,94 @@ public class Allocator {
                     PRNU[VRToPR[VR]] = operand.getNU();
                     continue;
                 }
-
+                
+                // Spill code
                 if (freeRegs.isEmpty()) {
-                    // Restore code
-                    if (VRToSpillLoc[VR] != -1) {
+                    // Create loadI operation
+                    InterRep loadiNode = new InterRep(
+                        TokenType.LOADI,
+                        new InterRepBlock(spillLoc),
+                        new InterRepBlock(),
+                        new InterRepBlock()
+                    );
 
-                    } else { // Spill code
-                        // Create loadI operation
-                        InterRep loadiNode = new InterRep(
-                            TokenType.LOADI,
-                            new InterRepBlock(spillLoc),
+                    loadiNode.getArg3().setPR(spillReg);
+                    loadiNode.setPrev(current.getPrev());
+                    current.getPrev().setNext(loadiNode);
+
+                    // Choose PR to spill
+                    int furthestNU = -1;
+                    int furthestNUPR = -1;
+                    for (int j = 0; j < PRNU.length; j++) {
+                        if (PRNU[j] > furthestNU) {
+                            furthestNU = PRNU[j];
+                            furthestNUPR = j;
+                        }
+                    }
+                    int VRToSpill = PRToVR[furthestNUPR];
+                    System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
+
+                    // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
+                    VRToPR[VRToSpill] = -1;
+                    PRToVR[furthestNUPR] = -1;
+                    PRNU[furthestNUPR] = -1;
+                    VRToSpillLoc[VRToSpill] = spillLoc;
+                    spillLoc += 4;
+                    freeRegs.add(furthestNUPR);
+
+                    // Create Store operation
+                    InterRep storeNode = new InterRep(
+                            TokenType.STORE,
+                            new InterRepBlock(),
                             new InterRepBlock(),
                             new InterRepBlock()
                         );
 
-                        loadiNode.getArg3().setPR(spillReg);
-                        loadiNode.setPrev(current.getPrev());
-                        current.getPrev().setNext(loadiNode);
+                    storeNode.getArg1().setPR(furthestNUPR);
+                    storeNode.getArg1().setVR(VRToSpill);
+                    storeNode.getArg3().setPR(spillReg);
+                    storeNode.setPrev(loadiNode);
+                    storeNode.setNext(current);
+                    loadiNode.setNext(storeNode);
+                    current.setPrev(storeNode);
 
-                        // Choose PR to spill
-                        int furthestNU = -1;
-                        int furthestNUPR = -1;
-                        for (int j = 0; j < PRNU.length; j++) {
-                            if (PRNU[j] > furthestNU) {
-                                furthestNU = PRNU[j];
-                                furthestNUPR = j;
-                            }
-                        }
-                        int VRToSpill = PRToVR[furthestNUPR];
-                        System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
-
-                        // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
-                        VRToPR[VRToSpill] = -1;
-                        PRToVR[furthestNUPR] = -1;
-                        PRNU[furthestNUPR] = -1;
-                        VRToSpillLoc[VRToSpill] = spillLoc;
-                        spillLoc += 4;
-                        freeRegs.add(furthestNUPR);
-
-                        // Create Store operation
-                        InterRep storeNode = new InterRep(
-                                TokenType.STORE,
-                                new InterRepBlock(),
-                                new InterRepBlock(),
-                                new InterRepBlock()
-                            );
-
-                        storeNode.getArg1().setPR(furthestNUPR);
-                        storeNode.getArg1().setVR(VRToSpill);
-                        storeNode.getArg3().setPR(spillReg);
-                        storeNode.setPrev(loadiNode);
-                        storeNode.setNext(current);
-                        loadiNode.setNext(storeNode);
-                        current.setPrev(storeNode);
-
-                        System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
-                    }
+                    System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
                 }
                 
+                // Restore code
+                if (VRToSpillLoc[VR] != -1) {
+                    System.out.println("Restoring VR " + VR + " with address " + VRToSpillLoc[VR]);
+                    // Create loadI operation
+                    InterRep loadiNode = new InterRep(
+                        TokenType.LOADI,
+                        new InterRepBlock(VRToSpillLoc[VR]),
+                        new InterRepBlock(),
+                        new InterRepBlock()
+                    );
+
+                    loadiNode.getArg3().setPR(spillReg);
+                    loadiNode.setPrev(current.getPrev());
+                    current.getPrev().setNext(loadiNode);
+                    VRToSpillLoc[VR] = -1;
+
+                    // Create load operation
+                    InterRep loadNode = new InterRep(
+                        TokenType.LOAD,
+                        new InterRepBlock(),
+                        new InterRepBlock(),
+                        new InterRepBlock()
+                    );
+
+                    loadNode.getArg1().setPR(spillReg);
+                    loadNode.getArg3().setVR(VR);
+                    loadNode.getArg3().setPR(freeRegs.get(freeRegs.size() - 1));
+
+                    loadNode.setPrev(loadiNode);
+                    loadNode.setNext(current);
+                    loadiNode.setNext(loadNode);
+                    current.setPrev(loadNode);
+                }
+
                 int PR = freeRegs.remove(freeRegs.size() - 1);
                 printFreeRegisters(freeRegs);
                 Integer NU = operand.getNU();
@@ -183,61 +213,57 @@ public class Allocator {
                     continue;
                 }
 
+                // Spill code
                 if (freeRegs.isEmpty()) {
-                    // Restore code
-                    if (VRToSpillLoc[VR] != -1) {
+                    // Create loadI operation
+                    InterRep loadiNode = new InterRep(
+                        TokenType.LOADI,
+                        new InterRepBlock(spillLoc),
+                        new InterRepBlock(),
+                        new InterRepBlock()
+                    );
 
-                    } else { // Spill code
-                        // Create loadI operation
-                        InterRep loadiNode = new InterRep(
-                            TokenType.LOADI,
-                            new InterRepBlock(spillLoc),
+                    loadiNode.getArg3().setPR(spillReg);
+                    loadiNode.setPrev(current.getPrev());
+                    current.getPrev().setNext(loadiNode);
+
+                    // Choose PR to spill
+                    int furthestNU = -1;
+                    int furthestNUPR = -1;
+                    for (int j = 0; j < PRNU.length; j++) {
+                        if (PRNU[j] > furthestNU) {
+                            furthestNU = PRNU[j];
+                            furthestNUPR = j;
+                        }
+                    }
+                    int VRToSpill = PRToVR[furthestNUPR];
+                    System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
+
+                    // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
+                    VRToPR[VRToSpill] = -1;
+                    PRToVR[furthestNUPR] = -1;
+                    PRNU[furthestNUPR] = -1;
+                    VRToSpillLoc[VRToSpill] = spillLoc;
+                    spillLoc += 4;
+                    freeRegs.add(furthestNUPR);
+
+                    // Create Store operation
+                    InterRep storeNode = new InterRep(
+                            TokenType.STORE,
+                            new InterRepBlock(),
                             new InterRepBlock(),
                             new InterRepBlock()
                         );
 
-                        loadiNode.getArg3().setPR(spillReg);
-                        loadiNode.setPrev(current.getPrev());
-                        current.getPrev().setNext(loadiNode);
+                    storeNode.getArg1().setPR(furthestNUPR);
+                    storeNode.getArg1().setVR(VRToSpill);
+                    storeNode.getArg3().setPR(spillReg);
+                    storeNode.setPrev(loadiNode);
+                    storeNode.setNext(current);
+                    loadiNode.setNext(storeNode);
+                    current.setPrev(storeNode);
 
-                        // Choose PR to spill
-                        int furthestNU = -1;
-                        int furthestNUPR = -1;
-                        for (int j = 0; j < PRNU.length; j++) {
-                            if (PRNU[j] > furthestNU) {
-                                furthestNU = PRNU[j];
-                                furthestNUPR = j;
-                            }
-                        }
-                        int VRToSpill = PRToVR[furthestNUPR];
-                        System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
-
-                        // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
-                        VRToPR[VRToSpill] = -1;
-                        PRToVR[furthestNUPR] = -1;
-                        PRNU[furthestNUPR] = -1;
-                        VRToSpillLoc[VRToSpill] = spillLoc;
-                        spillLoc += 4;
-                        freeRegs.add(furthestNUPR);
-
-                        // Create Store operation
-                        InterRep storeNode = new InterRep(
-                                TokenType.STORE,
-                                new InterRepBlock(),
-                                new InterRepBlock(),
-                                new InterRepBlock()
-                            );
-
-                        storeNode.getArg1().setPR(furthestNUPR);
-                        storeNode.getArg1().setVR(VRToSpill);
-                        storeNode.getArg3().setPR(spillReg);
-                        storeNode.setPrev(loadiNode);
-                        storeNode.setNext(current);
-                        loadiNode.setNext(storeNode);
-                        current.setPrev(storeNode);
-
-                        System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
-                    }
+                    System.out.println("Added spill operands: " + loadiNode + ", " + storeNode);
                 }
 
                 int PR = freeRegs.remove(freeRegs.size() - 1);
