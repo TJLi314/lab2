@@ -78,6 +78,7 @@ public class Allocator {
             // System.out.println("Assigning VRs to PRs for uses");
             // Assign VRs to PRs
             for (InterRepBlock operand : useOperands) {
+                // System.out.println(operand);
                 Integer VR = operand.getVR();
                 if (VRToPR[VR] != -1) {
                     operand.setPR(VRToPR[VR]);
@@ -109,7 +110,7 @@ public class Allocator {
                         }
                     }
                     int VRToSpill = PRToVR[furthestNUPR];
-                    // System.out.println("Spilling PR " + furthestNUPR + " and VR " + VRToSpill);
+                    // System.out.println("Spilling PR " + furthestNUPR + " and VsR " + VRToSpill);
 
                     // Update VRToSPillLoc, VRToPR, PRToVR, and NU accordinly, and add free register back
                     VRToPR[VRToSpill] = -1;
@@ -188,6 +189,7 @@ public class Allocator {
             for (InterRepBlock operand : useOperands) {
                 // System.out.println(operand);
                 // System.out.println(operand.getPR());
+                if (VRToPR[operand.getVR()] == -1) continue;
                 int PR = VRToPR[operand.getVR()];
                 if (PRNU[PR] != -1) continue;
                 
@@ -204,12 +206,17 @@ public class Allocator {
             // System.out.println("Assigning PRs to VRs for definitions");
             // Process operand definition
             if (current.getOpCode() != TokenType.STORE) {
-                // Not sure if this code is needed
                 InterRepBlock operand = current.getArg3();
                 Integer VR = operand.getVR();
+                if (operand.getNU() == -1) {
+                    // System.out.println("This definition doesn't have a next use. No need to allocate");
+                    current = current.getNext();
+                    continue;
+                }
                 if (VRToPR[VR] != -1) {
                     operand.setPR(VRToPR[VR]);
                     PRNU[VRToPR[VR]] = operand.getNU();
+                    current = current.getNext();
                     continue;
                 }
 
@@ -278,6 +285,7 @@ public class Allocator {
 
             current = current.getNext();
             // printMaps(VRToPR, PRToVR, PRNU, VRToSpillLoc);
+            // checkPRNUAligns(PRNU, PRToVR);
         }
     }
 
@@ -300,5 +308,19 @@ public class Allocator {
         System.out.print("\nVRToSpillLoc: ");
         for (int i = 0; i < VRToSpillLoc.length; i++) System.out.print(i + ": " + VRToSpillLoc[i] + ",");
         System.out.println();
+    }
+
+    public static void checkPRNUAligns(int[] PRNU, int[] PRToVR) {
+        System.out.println("Checking PRNU aligns with PRToVR");
+        for (int i = 0; i < PRNU.length; i++) {
+            if (PRToVR[i] == -1 && PRNU[i] != -1) {
+                System.out.println("FATAL ERROR: A PR WAS FREED TOO QUICKLY");
+            }
+
+            if (PRToVR[i] != -1 && PRNU[i] == -1) {
+                System.out.println("FATAL ERROR: A PR WITH NU -1 WAS NOT FREED");
+                System.out.println("Culprit PR: " + i);
+            }
+        }
     }
 }

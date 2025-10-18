@@ -77,19 +77,15 @@ public class Main {
 
     private static void printHelp() {
         System.out.println("Command Syntax:");
-        System.out.println("\t./412fe [flags] filename\n");
+        System.out.println("\t./412alloc [flags] filename\n");
 
         System.out.println("Required Arguments:");
+        System.out.println("\tk \tspecifies the number of registers available to the allocator");
         System.out.println("\tfilename is the pathname (absolute or relative) to the input file\n");
 
         System.out.println("Optional flags:");
         System.out.println("\t-h \tprints this message\n");
-
-        System.out.println("At most one of the following three flags:");
-        System.out.println("\t-s \tprints tokens in token stream");
-        System.out.println("\t-p \tinvokes parser and reports on success or failure");
-        System.out.println("\t-r \tprints human readable version of parser's IR");
-        System.out.println("If none is specified, the default action is '-p'");
+        System.out.println("\t-x \t perform renaming on the code in the input block and print the results");
     }
 
     private static void runScanMode(String filename) {
