@@ -1,13 +1,9 @@
 //NAME: Tianjian Li
 //NETID: tl107
 
-Questions:
-Do we ignore output operations?
-For an unused definition, do we increment maxLive?
-
 How to execute my file: 
 I did my project in Java and have many .java files in the root directory to compile. To compile them, just run './compile.csh'. Or you can manually run the following:
 
-'javac Main.java Scanner.java TransitionTable.java TokenType.java Token.java InterRep.java InterRepBlock.java Parser.java ParserResult.java'
+'javac Main.java Scanner.java TransitionTable.java TokenType.java Token.java InterRep.java InterRepBlock.java Parser.java ParserResult.java Renaming.java Allocator.java'
 
-This will create the 'Main.class' file needed to run my code. My '412fe' script runs this.
+This will create the 'Main.class' file needed to run my code. My '412alloc' script runs this.
